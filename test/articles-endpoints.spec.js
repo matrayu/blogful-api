@@ -51,10 +51,8 @@ describe(`Articles Endpoints`, function() {
                 const articleId = 123456
                 return supertest(app)
                     .get(`/articles/${articleId}`)
-                    .expect(404, { 
-                        error: {
-                            message: `Article doesn't exist`
-                        }
+                    .expect(404, {
+                        error: `Article with id ${articleId} not found`
                     })
             })
         })
@@ -78,7 +76,7 @@ describe(`Articles Endpoints`, function() {
         })
     })
 
-    describe.only('POST /articles', () => {
+    describe('POST /articles', () => {
         it('creates a new article and response with a 201', () => {
             this.retries(3)
             const newArticle = {
