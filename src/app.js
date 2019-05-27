@@ -7,6 +7,7 @@ const { NODE_ENV } = require('./config')
 const ArticlesService = require('./articles-service')
 
 const app = express()
+const jsonParser = express.json()
 
 const morganOption = (NODE_ENV === 'production')
   ? 'tiny'
@@ -16,15 +17,14 @@ app.use(morgan(morganOption))
 app.use(cors())
 app.use(helmet())
 
+
+
 app.get('/articles', (req, res, next) => {
     const knexInstance = req.app.get('db')
     ArticlesService.getAllArticles(knexInstance)
         .then(articles => {
             res.json(articles)
         })
-        //ASK TJ
-        //Note we're passing next into the .catch from the promise chain 
-        //so that any errors get handler by our error handler middleware.
         .catch(next)
 })
 
@@ -40,6 +40,20 @@ app.get('/articles/:article_id', (req, res, next) => {
                 })
             }
             res.json(article)
+        })
+        .catch(next)
+})
+
+app.post('/articles', jsonParser, (req, res, next) => {
+    const knexInstance = req.app.get('db')
+    const { title, style, content } = req.body
+    const newArticle = { title, content, style }
+    ArticlesService.insertArticle(knexInstance, newArticle)
+        .then(article => {
+            res
+                .status(201)
+                .location(`/articles/${article.id}`)
+                .json(article)
         })
         .catch(next)
 })
