@@ -3,17 +3,26 @@ const express = require('express');
 const valid = require('validator'); */
 const logger = require('../logger');
 const ArticlesService = require('./articles-service');
+const xss = require('xss');
 
 const articlesRouter = express.Router();
 const jsonParser = express.json();
+
+const sterileArticle = article => ({
+    id: article.id,
+    style: article.style,
+    content: xss(article.content),
+    date_published: article.date_published,
+    title: xss(article.title),
+});
 
 articlesRouter
     .route('/')
     .get((req, res, next) => {
         const knexInstance = req.app.get('db')
         ArticlesService.getAllArticles(knexInstance)
-            .then(articles => {
-                res.json(articles)
+            .then(article => {
+                res.json(article.map(sterileArticle))
             })
             .catch(next)
     })
@@ -39,7 +48,7 @@ articlesRouter
                 res
                     .status(201)
                     .location(`/articles/${article.id}`)
-                    .json(article)
+                    .json(sterileArticle(article))
             })
             .catch(next)
 })
@@ -58,7 +67,7 @@ articlesRouter
                         .status(404)
                         .json({ error: `Article with id ${article_id} not found` })
                 }
-                res.json(article)
+                res.json(sterileArticle(article))
             })
             .catch(next)
 })
