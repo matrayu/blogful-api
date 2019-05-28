@@ -190,4 +190,67 @@ describe(`Articles Endpoints`, function() {
         })
 
     })
+
+    describe('DELETE /articles/article_id', () => {
+        context('Given no article', () => {
+            it('responds with a 404 and error', () => {
+                const articleId = 123456
+                return supertest(app)
+                    .delete(`/articles/${articleId}`)
+                    .expect(404, {
+                        error: `Article with id ${articleId} not found`
+                    })
+            })
+        })
+        
+        context('Given there are articles in the database', () => {
+            const testArticles = makeArticlesArray();
+
+            beforeEach('insert articles', () => {
+                return db
+                    .into('blogful_articles')
+                    .insert(testArticles)
+            })
+
+            it('Response with 204 and removes the article', () => {
+                const idToRemove = 2;
+                const expectedArticles = testArticles.filter(article => article.id != idToRemove)
+                return supertest(app)
+                    .delete(`/articles/${idToRemove}`)
+                    .expect(204)
+                    .then(res =>
+                        supertest(app)
+                            .get(`/articles`)
+                            .expect(expectedArticles)
+                    )
+            })
+        })
+        
+
+
+
+        
+
+
+
+        /* context('Given an XXS attack article', () => {
+            const { maliciousArticle, expectedArticle } = makeMaliciousArticle();
+
+            beforeEach('insert malicious article', () => {
+                return db
+                    .into('blogful_articles')
+                    .insert([ maliciousArticle ])
+            })
+
+            it('removes XXS attack content', () => {
+                return supertest(app)
+                    .delete(`/articles/${maliciousArticle.id}`)
+                    .expect(200)
+                    .expect(res => {
+                        expect(res.body.title).to.eql(expectedArticle.title)
+                        expect(res.body.content).to.eql(expectedArticle.content)
+                    })
+            })
+        }) */
+    })
 })
