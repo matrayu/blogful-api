@@ -76,7 +76,7 @@ describe(`Articles Endpoints`, function() {
         })
     })
 
-    describe('POST /articles', () => {
+    describe.only('POST /articles', () => {
         it('creates a new article and response with a 201', () => {
             this.retries(3)
             const newArticle = {
@@ -105,6 +105,27 @@ describe(`Articles Endpoints`, function() {
                         .get(`/articles/${postRes.body.id}`)
                         .expect(postRes.body)
                 )
+        })
+
+        const requiredFields = ['title', 'style', 'content'];
+
+        requiredFields.forEach(field => {
+            const newArticle = {
+                title: 'new title',
+                style: 'new style',
+                content: 'new content'
+            }
+
+            it(`responds with 400 and an error message when the ${field} is missing`, () => {
+                delete newArticle[field];
+
+                return supertest(app)
+                    .post('/articles')
+                    .send(newArticle)
+                    .expect(400, {
+                        error: `Missing ${field} in the request body`
+                    })
+            })
         })
 
     })
