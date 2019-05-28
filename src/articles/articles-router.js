@@ -1,6 +1,4 @@
 const express = require('express');
-/* const uuid = require('uuid/v4');
-const valid = require('validator'); */
 const logger = require('../logger');
 const ArticlesService = require('./articles-service');
 const xss = require('xss');
@@ -55,7 +53,7 @@ articlesRouter
 
 articlesRouter
     .route('/:article_id')
-    .get((req, res, next) => {
+    .all((req, res, next) => {
         const knexInstance = req.app.get('db');
         const { article_id } = req.params;
 
@@ -67,29 +65,24 @@ articlesRouter
                         .status(404)
                         .json({ error: `Article with id ${article_id} not found` })
                 }
-                res.json(sterileArticle(article))
+                res.article = article // save the article for the next middleware
+                next() //call next so the next middleware happens!
             })
             .catch(next)
+    })
+    .get((req, res, next) => {
+        console.log(res.article)
+        res.json(sterileArticle(res.article))
     })
     .delete((req, res, next) => {
         const knexInstance = req.app.get('db');
         const { article_id } = req.params;
 
         ArticlesService.deleteArticle(knexInstance, article_id)
-            .then((article) => {
-                console.log(article)
-                if (!article) {
-                    logger.error(`Article with id ${article_id} not found`);
-                    return res
-                        .status(404)
-                        .json({ error: `Article with id ${article_id} not found` })
-                }
-                res
-                    .status(204)
-                    .end()
+            .then(() => {
+                res.status(204).end()
             })
             .catch(next)
-
     })
 
 module.exports = articlesRouter;
