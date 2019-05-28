@@ -22,28 +22,20 @@ articlesRouter
         const { title, style, content } = req.body;
         const newArticle = { title, style, content };
 
-        if (!title) {
-            logger.error('Title is required');
-            return res
-                .status(400)
-                .send('A title must be provided');
+        for (const [key, value] of Object.entries(newArticle)) {
+            if (value == null) {
+                logger.error(`${key} value is empty`)
+                return res
+                    .status(400)
+                    .send({
+                        error: `Missing ${key} in the request body`
+                    })
+            }
         }
 
-        if (!style) {
-            logger.error('Style is required');
-            return res
-                .status(400)
-                .send('A style must be provided');
-        }
-
-        if (!content) {
-            logger.error('Content is required');
-            return res
-                .status(400)
-                .send('Content must be provided');
-        }
         ArticlesService.insertArticle(knexInstance, newArticle)
             .then(article => {
+                logger.info(`Article with id ${article.id} created`)
                 res
                     .status(201)
                     .location(`/articles/${article.id}`)
