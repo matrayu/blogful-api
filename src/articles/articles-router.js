@@ -70,6 +70,26 @@ articlesRouter
                 res.json(sterileArticle(article))
             })
             .catch(next)
-})
+    })
+    .delete((req, res, next) => {
+        const knexInstance = req.app.get('db');
+        const { article_id } = req.params;
+
+        ArticlesService.deleteArticle(knexInstance, article_id)
+            .then((article) => {
+                console.log(article)
+                if (!article) {
+                    logger.error(`Article with id ${article_id} not found`);
+                    return res
+                        .status(404)
+                        .json({ error: `Article with id ${article_id} not found` })
+                }
+                res
+                    .status(204)
+                    .end()
+            })
+            .catch(next)
+
+    })
 
 module.exports = articlesRouter;
