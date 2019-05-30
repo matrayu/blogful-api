@@ -227,4 +227,90 @@ describe(`Articles Endpoints`, function() {
             })
         })
     })
+
+    describe('PATCH /api/articles', () => {
+        context('Given no articles found to PATCH', () => {
+            it('responds with a 404 and error', () => {
+                const articleId = 123456
+                return supertest(app)
+                    .patch(`/api/articles/${articleId}`)
+                    .expect(404, {
+                        error: `Article with id ${articleId} not found`
+                    })
+            })
+        })
+
+        context('Given there is an article found to PATCH', () => {
+            const testArticles = makeArticlesArray();
+
+            beforeEach('insert articles', () => {
+                return db
+                    .into('blogful_articles')
+                    .insert(testArticles)
+            })
+
+            it('responds with a 204 and updates the article', () => {
+                const idToPatch = 2;
+
+                const patchedArticle = {
+                    title: 'patched title',
+                    style: 'Interview',
+                    content: 'patched content',
+                };
+
+                const expectedArticle = {
+                    ...testArticles[idToPatch - 1],
+                    ...patchedArticle
+                }
+
+                return supertest(app)
+                    .patch(`/api/articles/${idToPatch}`)
+                    .send(patchedArticle)
+                    .expect(204)
+                    .then(res => 
+                        supertest(app)
+                            .get(`/api/articles/${idToPatch}`)
+                            .expect(expectedArticle)
+                    )
+            })
+
+            it('responds with a 400 and an error when no required fields are provided', () => {
+                const articleId = 2
+
+                return supertest(app)
+                    .patch(`/api/articles/${articleId}`)
+                    .send({ nonRequiredField: 'foo' })
+                    .expect(400, {
+                        error: `Request body must contain either 'title', 'style' or 'content'`
+                    })
+            })
+
+            it('responds with a 204 and updates only the fields that were provided in the body', () => {
+                const idToPatch = 2;
+
+                const patchedArticle = {
+                    title: 'patched title',
+                    content: 'patched content',
+                };
+
+                const expectedArticle = {
+                    ...testArticles[idToPatch - 1],
+                    ...patchedArticle
+                }
+
+                return supertest(app)
+                    .patch(`/api/articles/${idToPatch}`)
+                    .send({
+                        ...patchedArticle,
+                        fieldToIgnore: 'this should not update'
+                    })
+                    .expect(204)
+                    .then(res => 
+                        supertest(app)
+                            .get(`/api/articles/${idToPatch}`)
+                            .expect(expectedArticle)
+                    )
+            })
+        })
+    })
 })

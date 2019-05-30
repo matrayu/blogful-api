@@ -31,7 +31,7 @@ const ArticlesService = {
             .where({ id })
             .delete()
     },
-    updateArticles(knex, id, newArticleFields) {
+    updateArticle(knex, id, newArticleFields) {
         return knex('blogful_articles')
             .where({ id })
             .update(newArticleFields)

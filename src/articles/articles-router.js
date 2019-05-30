@@ -55,6 +55,8 @@ articlesRouter
 
 articlesRouter
     .route('/:article_id')
+    //.all responds with a 404 for every request that's specific to an article 
+    //where the identifier references an entity that doesn't exist
     .all((req, res, next) => {
         const knexInstance = req.app.get('db');
         const { article_id } = req.params;
@@ -82,6 +84,32 @@ articlesRouter
         ArticlesService.deleteArticle(knexInstance, article_id)
             .then(() => {
                 res.status(204).end()
+            })
+            .catch(next)
+    })
+    .patch(jsonParser, (req, res, next) => {
+        //res.status(204).end() //test to check things are working
+        const knexInstance = req.app.get('db');
+        const { article_id } = req.params;
+        const { title, style, content } = req.body;
+        const articleToPatch = { title, content, style }
+
+        const numberOfValues = Object.values(articleToPatch).filter(Boolean).length;
+        console.log(numberOfValues)
+        if (numberOfValues === 0) {
+            logger.error(`Request body must contain either 'title', 'style' or 'content'`)
+            return res
+                .status(400)
+                .json({
+                    error: `Request body must contain either 'title', 'style' or 'content'` 
+                })
+        }
+        
+        ArticlesService.updateArticle(knexInstance, article_id, articleToPatch)
+            .then(numRowsAfected => {
+                res
+                    .status(204)
+                    .end()
             })
             .catch(next)
     })
