@@ -2,6 +2,7 @@ const express = require('express');
 const logger = require('../logger');
 const ArticlesService = require('./articles-service');
 const xss = require('xss');
+const path = require('path'); //Node's internal module - access Posix
 
 const articlesRouter = express.Router();
 const jsonParser = express.json();
@@ -28,6 +29,7 @@ articlesRouter
         const knexInstance = req.app.get('db')
         const { title, style, content } = req.body;
         const newArticle = { title, style, content };
+        console.log(newArticle)
 
         for (const [key, value] of Object.entries(newArticle)) {
             if (value == null) {
@@ -45,7 +47,7 @@ articlesRouter
                 logger.info(`Article with id ${article.id} created`)
                 res
                     .status(201)
-                    .location(`/articles/${article.id}`)
+                    .location(path.posix.join(req.originalUrl, `/${article.id}`))
                     .json(sterileArticle(article))
             })
             .catch(next)
@@ -71,7 +73,6 @@ articlesRouter
             .catch(next)
     })
     .get((req, res, next) => {
-        console.log(res.article)
         res.json(sterileArticle(res.article))
     })
     .delete((req, res, next) => {
