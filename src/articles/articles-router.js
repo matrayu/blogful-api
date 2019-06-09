@@ -13,6 +13,7 @@ const sterileArticle = article => ({
     content: xss(article.content),
     date_published: article.date_published,
     title: xss(article.title),
+    author: article.author
 });
 
 articlesRouter
@@ -27,9 +28,8 @@ articlesRouter
     })
     .post(jsonParser, (req, res, next) => {
         const knexInstance = req.app.get('db')
-        const { title, style, content } = req.body;
+        const { title, style, content, author } = req.body;
         const newArticle = { title, style, content };
-        console.log(newArticle)
 
         for (const [key, value] of Object.entries(newArticle)) {
             if (value == null) {
@@ -41,6 +41,9 @@ articlesRouter
                     })
             }
         }
+
+        //add author to the newArticle object
+        newArticle.author = author
 
         ArticlesService.insertArticle(knexInstance, newArticle)
             .then(article => {
@@ -95,7 +98,7 @@ articlesRouter
         const articleToPatch = { title, content, style }
 
         const numberOfValues = Object.values(articleToPatch).filter(Boolean).length;
-        console.log(numberOfValues)
+        
         if (numberOfValues === 0) {
             logger.error(`Request body must contain either 'title', 'style' or 'content'`)
             return res
@@ -106,7 +109,7 @@ articlesRouter
         }
         
         ArticlesService.updateArticle(knexInstance, article_id, articleToPatch)
-            .then(numRowsAfected => {
+            .then(numRowsAffected => {
                 res
                     .status(204)
                     .end()

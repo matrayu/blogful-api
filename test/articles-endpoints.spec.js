@@ -1,4 +1,5 @@
-const { makeArticlesArray, makeMaliciousArticle  } = require('./articles.fixtures')
+const { makeArticlesArray, makeMaliciousArticle  } = require('./articles.fixtures');
+const { makeUsersArray } = require('./users.fixtures');
 const knex = require('knex');
 const app = require('../src/app');
 
@@ -17,9 +18,10 @@ describe(`Articles Endpoints`, function() {
 
     after('disconnect from db', () => db.destroy())
 
-    before('clean the table', () => db('blogful_articles').truncate())
-    
-    afterEach('cleanup', () => db('blogful_articles').truncate())
+    //raw() method is how you execute arbitrary SQL in knex
+    //before('clean the table', () => db.raw('TRUNCATE blogful_articles, blogful_users, blogful_comments RESTART IDENTITY CASCADE'))
+
+    afterEach('cleanup', () => db.raw('TRUNCATE blogful_articles, blogful_users, blogful_comments RESTART IDENTITY CASCADE'))
 
     describe(`GET /api/articles`, () => {
         context('Given no articles', () => {
@@ -32,10 +34,17 @@ describe(`Articles Endpoints`, function() {
 
         context('Given there are articles in the database', () => {
             const testArticles = makeArticlesArray();
+            const testUsers = makeUsersArray();
+
             beforeEach('insert articles', () => {
                 return db
-                    .into('blogful_articles')
-                    .insert(testArticles)
+                    .into('blogful_users')
+                    .insert(testUsers)
+                    .then(() => {
+                        return db
+                            .into('blogful_articles')
+                            .insert(testArticles)
+                    })
             })
     
             it(`responds with 200 and all of the articles`, () => {
@@ -47,11 +56,17 @@ describe(`Articles Endpoints`, function() {
 
         context('Given an XXS attack article', () => {
             const { maliciousArticle, expectedArticle } = makeMaliciousArticle();
+            const testUsers = makeUsersArray();
 
             beforeEach('insert malicious article', () => {
                 return db
-                    .into('blogful_articles')
-                    .insert([ maliciousArticle ])
+                    .into('blogful_users')
+                    .insert(testUsers)
+                    .then(() => {
+                        return db
+                            .into('blogful_articles')
+                            .insert([ maliciousArticle ])
+                    })
             })
 
             it('removes XXS attack content', () => {
@@ -80,11 +95,17 @@ describe(`Articles Endpoints`, function() {
 
         context('Given there are articles in the database', () => {
             const testArticles = makeArticlesArray();
+            const testUsers = makeUsersArray();
 
             beforeEach('insert articles', () => {
                 return db
-                    .into('blogful_articles')
-                    .insert(testArticles)
+                    .into('blogful_users')
+                    .insert(testUsers)
+                    .then(() => {
+                        return db
+                        .into('blogful_articles')
+                        .insert(testArticles)
+                    })
             })
 
             it('responds with 200 and the specified article', () => {
@@ -98,11 +119,17 @@ describe(`Articles Endpoints`, function() {
 
         context('Given an XXS attack article', () => {
             const { maliciousArticle, expectedArticle } = makeMaliciousArticle();
+            const testUsers = makeUsersArray();
 
             beforeEach('insert malicious article', () => {
                 return db
-                    .into('blogful_articles')
-                    .insert([ maliciousArticle ])
+                    .into('blogful_users')
+                    .insert(testUsers)
+                    .then(() => {
+                        return db
+                            .into('blogful_articles')
+                            .insert([ maliciousArticle ])
+                    })
             })
 
             it('removes XXS attack content', () => {
@@ -136,7 +163,7 @@ describe(`Articles Endpoints`, function() {
                     expect(res.body).to.have.property('id')
                     expect(res.headers.location).to.eql(`/api/articles/${res.body.id}`)
                     const expected = new Date().toLocaleString
-                    const actual = new Date(res.body.data_published).toLocaleString
+                    const actual = new Date(res.body.date_published).toLocaleString
                     expect(actual).to.eql(expected)
                 })
                 //we used an implicit return inside the then block so that 
@@ -154,7 +181,7 @@ describe(`Articles Endpoints`, function() {
             const newArticle = {
                 title: 'new title',
                 style: 'new style',
-                content: 'new content'
+                content: 'new content',
             }
 
             it(`responds with 400 and an error message when the ${field} is missing`, () => {
@@ -171,11 +198,17 @@ describe(`Articles Endpoints`, function() {
 
         context('Given an XXS attack article', () => {
             const { maliciousArticle, expectedArticle } = makeMaliciousArticle();
+            const testUsers = makeUsersArray();
 
             beforeEach('insert malicious article', () => {
                 return db
-                    .into('blogful_articles')
-                    .insert([ maliciousArticle ])
+                    .into('blogful_users')
+                    .insert(testUsers)
+                    .then(() => {
+                        return db
+                            .into('blogful_articles')
+                            .insert([ maliciousArticle ])
+                    })
             })
 
             it('removes XXS attack content', () => {
@@ -206,11 +239,17 @@ describe(`Articles Endpoints`, function() {
         
         context('Given there are articles in the database', () => {
             const testArticles = makeArticlesArray();
+            const testUsers = makeUsersArray();
 
             beforeEach('insert articles', () => {
                 return db
-                    .into('blogful_articles')
-                    .insert(testArticles)
+                    .into('blogful_users')
+                    .insert(testUsers)
+                    .then(() => {
+                        return db
+                        .into('blogful_articles')
+                        .insert(testArticles)
+                    })
             })
 
             it('Response with 204 and removes the article', () => {
@@ -242,11 +281,17 @@ describe(`Articles Endpoints`, function() {
 
         context('Given there is an article found to PATCH', () => {
             const testArticles = makeArticlesArray();
+            const testUsers = makeUsersArray();
 
             beforeEach('insert articles', () => {
                 return db
-                    .into('blogful_articles')
-                    .insert(testArticles)
+                    .into('blogful_users')
+                    .insert(testUsers)
+                    .then(() => {
+                        return db
+                        .into('blogful_articles')
+                        .insert(testArticles)
+                    })
             })
 
             it('responds with a 204 and updates the article', () => {
